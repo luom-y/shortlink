@@ -1,0 +1,8 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+logging:
+  level:
+    com.shortlink: INFO
