@@ -1,6 +1,5 @@
 package com.shortlink.common.exception;
 
-import com.shortlink.common.result.Result;
 import com.shortlink.common.result.ResultCode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;

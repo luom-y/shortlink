@@ -1,51 +1,63 @@
-package com.shortlink.common.result;
+﻿package com.shortlink.common.result;
 
-import com.alibaba.fastjson2.JSON;
+import lombok.Getter;
+
+import java.io.Serial;
+import java.io.Serializable;
 
 /**
- * Unified API response body
+ * Unified API response wrapper.
+ *
+ * <p>Usage:
+ * <pre>{@code
+ *   Result.success(data);                    // 200 with data
+ *   Result.success();                         // 200 without data
+ *   Result.fail(ResultCode.BAD_REQUEST);      // 400
+ *   Result.fail(ResultCode.USER_NOT_FOUND);   // 1001
+ * }</pre>
  */
-public class Result<T> {
+@Getter
+public class Result<T> implements Serializable {
 
-    private Integer code;
-    private String message;
-    private T data;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    private Result() {}
+    private final Integer code;
+    private final String message;
+    private final T data;
 
-    public static <T> Result<T> success(T data) {
-        Result<T> result = new Result<>();
-        result.code = ResultCode.SUCCESS.getCode();
-        result.message = ResultCode.SUCCESS.getMessage();
-        result.data = data;
-        return result;
+    private Result(Integer code, String message, T data) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
     }
+
+    // ---- success factories ----
 
     public static <T> Result<T> success() {
-        return success(null);
+        return new Result<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), null);
     }
 
+    public static <T> Result<T> success(T data) {
+        return new Result<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), data);
+    }
+
+    public static <T> Result<T> success(String message, T data) {
+        return new Result<>(ResultCode.SUCCESS.getCode(), message, data);
+    }
+
+    // ---- fail factories ----
+
     public static <T> Result<T> fail(ResultCode resultCode) {
-        return fail(resultCode.getCode(), resultCode.getMessage());
+        return new Result<>(resultCode.getCode(), resultCode.getMessage(), null);
+    }
+
+    public static <T> Result<T> fail(ResultCode resultCode, String message) {
+        return new Result<>(resultCode.getCode(), message, null);
     }
 
     public static <T> Result<T> fail(Integer code, String message) {
-        Result<T> result = new Result<>();
-        result.code = code;
-        result.message = message;
-        return result;
-    }
-
-    public Integer getCode() { return code; }
-    public void setCode(Integer code) { this.code = code; }
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
-    public T getData() { return data; }
-    public void setData(T data) { this.data = data; }
-
-    @Override
-    public String toString() {
-        return JSON.toJSONString(this);
+        return new Result<>(code, message, null);
     }
 
     public boolean isSuccess() {
