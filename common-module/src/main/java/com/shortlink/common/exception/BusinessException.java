@@ -1,7 +1,10 @@
-package com.shortlink.common.exception;
+﻿package com.shortlink.common.exception;
 
 import com.shortlink.common.result.ResultCode;
+import lombok.Getter;
 
+
+@Getter
 public class BusinessException extends RuntimeException {
 
     private final Integer code;
@@ -11,10 +14,13 @@ public class BusinessException extends RuntimeException {
         this.code = resultCode.getCode();
     }
 
+    public BusinessException(ResultCode resultCode, String message) {
+        super(message);
+        this.code = resultCode.getCode();
+    }
+
     public BusinessException(Integer code, String message) {
         super(message);
         this.code = code;
     }
-
-    public Integer getCode() { return code; }
 }
