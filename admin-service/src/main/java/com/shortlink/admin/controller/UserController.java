@@ -59,4 +59,5 @@ public class UserController {
         userService.update(id, requestParam);
         return Result.success();
     }
+
 }
