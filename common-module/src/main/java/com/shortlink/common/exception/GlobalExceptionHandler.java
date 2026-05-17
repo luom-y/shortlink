@@ -1,5 +1,6 @@
 package com.shortlink.common.exception;
 
+import com.shortlink.common.result.Result;
 import com.shortlink.common.result.ResultCode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e, HttpServletRequest request) {
-        log.warn("Business exception: {} | URI: {}", e.getMessage(), request.getRequestURI());
+        log.warn("业务异常: code={}, msg={}, URI={}", e.getCode(), e.getMessage(), request.getRequestURI());
         return Result.fail(e.getCode(), e.getMessage());
     }
 
@@ -27,14 +28,14 @@ public class GlobalExceptionHandler {
         String message = e.getBindingResult().getAllErrors().stream()
                 .map(err -> err.getDefaultMessage())
                 .reduce((a, b) -> a + "; " + b)
-                .orElse("Parameter validation failed");
+                .orElse("参数校验失败");
         return Result.fail(ResultCode.BAD_REQUEST.getCode(), message);
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleException(Exception e, HttpServletRequest request) {
-        log.error("System exception: {} | URI: {}", e.getMessage(), request.getRequestURI(), e);
+        log.error("系统异常: msg={}, URI={}", e.getMessage(), request.getRequestURI(), e);
         return Result.fail(ResultCode.INTERNAL_ERROR);
     }
 }

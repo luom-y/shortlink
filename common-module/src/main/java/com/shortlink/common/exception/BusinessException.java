@@ -1,8 +1,7 @@
-﻿package com.shortlink.common.exception;
+package com.shortlink.common.exception;
 
 import com.shortlink.common.result.ResultCode;
 import lombok.Getter;
-
 
 @Getter
 public class BusinessException extends RuntimeException {

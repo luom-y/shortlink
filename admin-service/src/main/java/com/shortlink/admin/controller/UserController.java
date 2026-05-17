@@ -1,40 +1,62 @@
 package com.shortlink.admin.controller;
 
-
+import com.shortlink.admin.dto.req.UserLoginReqDTO;
+import com.shortlink.admin.dto.req.UserRefreshTokenReqDTO;
 import com.shortlink.admin.dto.req.UserRegisterReqDTO;
 import com.shortlink.admin.dto.req.UserUpdateReqDTO;
+import com.shortlink.admin.dto.resp.UserLoginRespDTO;
 import com.shortlink.admin.service.UserService;
 import com.shortlink.common.result.Result;
-import com.shortlink.common.result.Results;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
+@RestController
+@RequiredArgsConstructor
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
+
     /**
-     * 注册用户
+     * 用户注册
+     * @param requestParam
+     * @return
      */
     @PostMapping("/api/v1/admin/users")
-    public Result<Void> register(@RequestBody UserRegisterReqDTO requestParam) {
+    public Result<Void> register(@Valid @RequestBody UserRegisterReqDTO requestParam) {
         userService.register(requestParam);
-        return Results.success();
+        return Result.success();
     }
 
     /**
-     * 修改用户
+     * 用户登录
+     * @param requestParam
+     * @return
+     */
+    @PostMapping("/api/v1/admin/users/login")
+    public Result<UserLoginRespDTO> login(@Valid @RequestBody UserLoginReqDTO requestParam) {
+        return Result.success(userService.login(requestParam));
+    }
+
+    /**
+     * 用户登录token重置
+     * @param requestParam
+     * @return
+     */
+    @PostMapping("/api/v1/admin/users/refresh")
+    public Result<UserLoginRespDTO> refresh(@Valid @RequestBody UserRefreshTokenReqDTO requestParam) {
+        return Result.success(userService.refreshToken(requestParam));
+    }
+
+    /**
+     * 用户修改
+     * @param id
+     * @param requestParam
+     * @return
      */
     @PutMapping("/api/v1/admin/users/{id}")
-    public Result<Void> update( @PathVariable Long id ,@RequestBody UserUpdateReqDTO requestParam) {
-        userService.update(id,requestParam);
-        return Results.success();
+    public Result<Void> update(@PathVariable Long id, @Valid @RequestBody UserUpdateReqDTO requestParam) {
+        userService.update(id, requestParam);
+        return Result.success();
     }
-
-    /**
-     *  用户登录
-     */
-
-
 }

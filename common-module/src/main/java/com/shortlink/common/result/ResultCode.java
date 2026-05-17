@@ -1,16 +1,10 @@
-﻿package com.shortlink.common.result;
+package com.shortlink.common.result;
 
 import lombok.Getter;
 
-/**
- * Standardized API result codes.
- *
- * <p>HTTP-aligned codes for infrastructure; 1xxx+ for business domain errors.
- */
 @Getter
 public enum ResultCode {
 
-    // ---- Success ----
     SUCCESS(200, "成功"),
 
     BAD_REQUEST(400, "请求参数错误"),

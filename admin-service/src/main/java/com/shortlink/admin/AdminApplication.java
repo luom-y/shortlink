@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = "com.shortlink")
-@MapperScan("com.shortlink.admin.mapper")
+@MapperScan("com.shortlink.admin.dao.mapper")
 public class AdminApplication {
 
     public static void main(String[] args) {

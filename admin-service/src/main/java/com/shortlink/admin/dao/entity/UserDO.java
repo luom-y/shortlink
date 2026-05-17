@@ -17,19 +17,20 @@ public class UserDO {
 
     private String username;
 
-    private String password;       // BCrypt 密文
+    private String password;
 
     private String email;
 
     private String phone;
 
-    private String role;           // "USER" | "ADMIN"
+    private String role;
 
-    private Integer status;        // 1=正常 0=禁用
+    private Integer status;
 
     @TableLogic
-    private Integer deleted;       // 0=存在 1=已删
+    private Integer deleted;
 
     private LocalDateTime createTime;
+
     private LocalDateTime updateTime;
 }
