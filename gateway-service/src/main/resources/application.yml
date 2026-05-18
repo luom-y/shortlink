@@ -13,6 +13,18 @@ spring:
           uri: http://localhost:8084
           predicates:
             - Path=/api/v1/admin/**
+        - id: shortlink-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/shortlinks/**
+        - id: stats-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/stats/**
+        - id: shortlink-redirect
+          uri: http://localhost:8082
+          predicates:
+            - Path=/{shortCode}
 
 jwt:
   secret: ${JWT_SECRET:d3v-secret-at-least-256-bits-long-for-hs256-algo!!}

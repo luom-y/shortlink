@@ -50,6 +50,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.shortlink</groupId>
             <artifactId>common-module</artifactId>
         </dependency>

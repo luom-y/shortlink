@@ -22,11 +22,17 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/**
+ * JWT鉴权全局过滤器。
+ * 白名单路径（登录/注册/短链接跳转）无需Token，其他请求必须携带有效Token。
+ * Token同时校验Redis中的有效性，支持主动登出/Token撤销。
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter implements GlobalFilter, Ordered {
 
+    /** 白名单路径：无需鉴权 */
     private static final List<String> WHITELIST = List.of(
             "/api/v1/admin/users/login",
             "/api/v1/admin/users",
@@ -42,7 +48,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        if (isWhitelist(path)) {
+        // 白名单路径和短链接跳转路径不需要鉴权
+        if (isWhitelist(path) || isShortLinkRedirect(path)) {
             return chain.filter(exchange);
         }
 
@@ -59,6 +66,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             return unauthorized(exchange, "Token无效");
         }
 
+        // 从Redis校验Token是否仍然有效（支持主动撤销）
         String redisKey = ACCESS_TOKEN_PREFIX + userId;
         String storedToken = stringRedisTemplate.opsForValue().get(redisKey);
         if (!token.equals(storedToken)) {
@@ -66,6 +74,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             return unauthorized(exchange, "Token已失效");
         }
 
+        // 将userId透传给下游服务
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                 .header("X-User-Id", userId.toString())
                 .build();
@@ -80,6 +89,24 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
     private boolean isWhitelist(String path) {
         return WHITELIST.stream().anyMatch(path::equals);
+    }
+
+    /**
+     * 判断是否为短链接跳转路径：单段路径（如 /aBc123），非/api/开头，纯字母数字。
+     */
+    private boolean isShortLinkRedirect(String path) {
+        if (path == null || path.isBlank()) {
+            return false;
+        }
+        String[] segments = path.split("/");
+        if (segments.length != 2) {
+            return false;
+        }
+        String segment = segments[1];
+        if (segment.isBlank() || segment.startsWith("api") || segment.startsWith("actuator")) {
+            return false;
+        }
+        return segment.matches("[a-zA-Z0-9]+");
     }
 
     private String extractToken(ServerHttpRequest request) {

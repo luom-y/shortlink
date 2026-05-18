@@ -4,28 +4,28 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-@TableName("user")
-public class UserDO {
+@TableName("short_link")
+public class ShortLinkDO {
 
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
-    private String username;
+    private String shortCode;
 
-    @JsonIgnore
-    private String password;
+    private String originalUrl;
 
-    private String email;
+    private String title;
 
-    private String phone;
+    private Long userId;
 
-    private String role;
+    private LocalDateTime expireTime;
+
+    private Long totalClicks;
 
     private Integer status;
 

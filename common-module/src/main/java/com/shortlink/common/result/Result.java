@@ -5,6 +5,10 @@ import lombok.Getter;
 import java.io.Serial;
 import java.io.Serializable;
 
+/**
+ * 统一响应体。
+ * @param <T> 数据类型
+ */
 @Getter
 public class Result<T> implements Serializable {
 
