@@ -49,6 +49,16 @@ public class UserController {
     }
 
     /**
+     * 用户退出
+     */
+    @PostMapping("/api/v1/admin/users/logout")
+    public Result<Void> logout(@RequestHeader("Authorization") String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        userService.logout(token);
+        return Result.success();
+    }
+
+    /**
      * 用户修改
      * @param id
      * @param requestParam
@@ -59,5 +69,4 @@ public class UserController {
         userService.update(id, requestParam);
         return Result.success();
     }
-
 }

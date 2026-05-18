@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import static com.shortlink.admin.constants.RedisConstants.ACCESS_TOKEN;
 import static com.shortlink.admin.constants.RedisConstants.REFRESH_TOKEN;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -75,13 +74,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         }
         //生成用户Token
         Long userId = userDO.getId();
-        String access = ACCESS_TOKEN + userId;
-        String refresh = REFRESH_TOKEN + userId;
-        String accessToken = jwtUtil.generateAccessToken(userDO.getId(), userDO.getRole());
-        stringRedisTemplate.opsForValue().set(access,accessToken,2, TimeUnit.HOURS);
-        String refreshToken = jwtUtil.generateRefreshToken(userDO.getId(), userDO.getRole());
-        stringRedisTemplate.opsForValue().set(refresh,refreshToken,7, TimeUnit.DAYS);
-        log.info("用户登录成功: userId={}, username={}", userDO.getId(), userDO.getUsername());
+        String accessToken = jwtUtil.generateAccessToken(userId, userDO.getRole());
+        String refreshToken = jwtUtil.generateRefreshToken(userId, userDO.getRole());
+        String accessKey = ACCESS_TOKEN + userId;
+        String refreshKey = REFRESH_TOKEN + userId;
+        stringRedisTemplate.opsForValue().set(accessKey, accessToken, jwtUtil.getAccessTokenTtl(), TimeUnit.SECONDS);
+        stringRedisTemplate.opsForValue().set(refreshKey, refreshToken, jwtUtil.getRefreshTokenTtl(), TimeUnit.SECONDS);
+        log.info("用户登录成功: userId={}, username={}", userId, userDO.getUsername());
         return UserLoginRespDTO.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -105,8 +104,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
         //验证Redis中是否存在oldRefreshToken
         String refreshKey = REFRESH_TOKEN + userId;
-        if(!oldRefreshToken.equals(stringRedisTemplate.opsForValue().get(refreshKey))) {
-            throw new BusinessException(ResultCode.TOKEN_EXPIRED,"Token已失效");
+        String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);
+        if (!oldRefreshToken.equals(storedRefreshToken)) {
+            throw new BusinessException(ResultCode.TOKEN_EXPIRED, "Token已失效");
         }
 
         //验证用户
@@ -118,18 +118,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             throw new BusinessException(ResultCode.FORBIDDEN, "账号已被禁用");
         }
         //生成新的Token
-        String accessKey  = ACCESS_TOKEN + userId;
+        String accessKey = ACCESS_TOKEN + userId;
+        stringRedisTemplate.delete(accessKey);
+        stringRedisTemplate.delete(refreshKey);
         String newAccessToken = jwtUtil.generateAccessToken(userId, userDO.getRole());
         String newRefreshToken = jwtUtil.generateRefreshToken(userId, userDO.getRole());
-        stringRedisTemplate.delete(refreshKey);
-        stringRedisTemplate.delete(accessKey);
-        stringRedisTemplate.opsForValue().set(accessKey, newAccessToken, 2, TimeUnit.HOURS);
-        stringRedisTemplate.opsForValue().set(refreshKey+ userId, newRefreshToken, 7, TimeUnit.DAYS);
+        stringRedisTemplate.opsForValue().set(accessKey, newAccessToken, jwtUtil.getAccessTokenTtl(), TimeUnit.SECONDS);
+        stringRedisTemplate.opsForValue().set(refreshKey, newRefreshToken, jwtUtil.getRefreshTokenTtl(), TimeUnit.SECONDS);
         return UserLoginRespDTO.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
                 .expiresIn(jwtUtil.getAccessTokenTtl())
                 .build();
+    }
+
+    @Override
+    public void logout(String accessToken) {
+        Long userId;
+        try {
+            userId = jwtUtil.getUserId(accessToken);
+        } catch (Exception e) {
+            return;
+        }
+        //删除用户Token
+        String accessKey = ACCESS_TOKEN + userId;
+        String refreshKey = REFRESH_TOKEN + userId;
+        stringRedisTemplate.delete(accessKey);
+        stringRedisTemplate.delete(refreshKey);
+        log.info("用户退出: userId={}", userId);
     }
 
     @Override

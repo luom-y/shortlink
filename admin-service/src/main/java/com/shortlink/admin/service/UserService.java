@@ -19,5 +19,7 @@ public interface UserService extends IService<UserDO> {
 
     UserLoginRespDTO refreshToken(UserRefreshTokenReqDTO requestParam);
 
+    void logout(String accessToken);
+
     void update(Long id, UserUpdateReqDTO requestParam);
 }
