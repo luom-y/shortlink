@@ -27,6 +27,9 @@ import java.util.concurrent.TimeUnit;
 import static com.shortlink.admin.constants.RedisConstants.ACCESS_TOKEN;
 import static com.shortlink.admin.constants.RedisConstants.REFRESH_TOKEN;
 
+/**
+ * 用户服务实现：注册、登录、Token刷新、登出、信息修改。
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -59,7 +62,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     @Override
     public UserLoginRespDTO login(UserLoginReqDTO requestParam) {
-        //检查用户是否存在
+        // 校验用户是否存在
         UserDO userDO = lambdaQuery()
                 .eq(UserDO::getUsername, requestParam.getUsername())
                 .one();
@@ -72,7 +75,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         if (userDO.getStatus() != null && userDO.getStatus() == 0) {
             throw new BusinessException(ResultCode.FORBIDDEN, "账号已被禁用");
         }
-        //生成用户Token
+        // 生成Token并存入Redis
         Long userId = userDO.getId();
         String accessToken = jwtUtil.generateAccessToken(userId, userDO.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(userId, userDO.getRole());
@@ -94,7 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         String oldRefreshToken = requestParam.getRefreshToken();
         Long userId;
 
-        // 解析oldRefreshToken获取用户ID
+        // 解析旧refreshToken获取用户ID
         try {
             userId = jwtUtil.getUserId(oldRefreshToken);
         } catch (Exception e) {
@@ -102,14 +105,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             throw new BusinessException(ResultCode.TOKEN_INVALID, "refreshToken无效或已过期");
         }
 
-        //验证Redis中是否存在oldRefreshToken
+        // 验证Redis中是否存在该refreshToken
         String refreshKey = REFRESH_TOKEN + userId;
         String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);
         if (!oldRefreshToken.equals(storedRefreshToken)) {
             throw new BusinessException(ResultCode.TOKEN_EXPIRED, "Token已失效");
         }
 
-        //验证用户
+        // 验证用户状态
         UserDO userDO = getById(userId);
         if (userDO == null) {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
@@ -117,7 +120,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         if (userDO.getStatus() != null && userDO.getStatus() == 0) {
             throw new BusinessException(ResultCode.FORBIDDEN, "账号已被禁用");
         }
-        //生成新的Token
+        // 生成新Token，覆盖旧Token
         String accessKey = ACCESS_TOKEN + userId;
         stringRedisTemplate.delete(accessKey);
         stringRedisTemplate.delete(refreshKey);
@@ -140,12 +143,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         } catch (Exception e) {
             return;
         }
-        //删除用户Token
+        // 删除Redis中的Token，实现主动登出
         String accessKey = ACCESS_TOKEN + userId;
         String refreshKey = REFRESH_TOKEN + userId;
         stringRedisTemplate.delete(accessKey);
         stringRedisTemplate.delete(refreshKey);
-        log.info("用户退出: userId={}", userId);
+        log.info("用户登出: userId={}", userId);
     }
 
     @Override
